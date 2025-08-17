@@ -41,7 +41,7 @@ export function HeroSection() {
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-semibold"
             >
               <Target className="w-5 h-5 mr-2" />
-              Ver Ações Ativas
+              Ver Rifas Ativas
             </Button>
           </div>
 

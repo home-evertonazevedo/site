@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Header } from './components/Header.jsx'
 import { HeroSection } from './components/HeroSection.jsx'
+import { FilterBar } from './components/FilterBar.jsx'
 import { RaffleCard } from './components/RaffleCard.jsx'
 import { Footer } from './components/Footer.jsx'
 import { mockRaffles, getFilteredRaffles } from './data/mockRaffles.js'
@@ -16,11 +17,15 @@ function App() {
 
   const filteredRaffles = getFilteredRaffles(mockRaffles, filters)
 
+  const handleFiltersChange = (newFilters) => {
+    setFilters(newFilters)
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <HeroSection />
-      {/* <FilterBar onFiltersChange={handleFiltersChange} /> */}
+      <FilterBar onFiltersChange={handleFiltersChange} />
       
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
