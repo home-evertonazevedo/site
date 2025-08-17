@@ -50,10 +50,10 @@
   --card-foreground: #ffffff;
   --popover: #2d2d2d;
   --popover-foreground: #ffffff;
-  --primary: #4a5d23; /* Verde militar */
+  --primary: #404040; /* Cinza escuro */
   --primary-foreground: #ffffff;
-  --secondary: #d4af37; /* Dourado */
-  --secondary-foreground: #1a1a1a;
+  --secondary: #eb8634; /* Laranja */
+  --secondary-foreground: #ffffff;
   --muted: #404040;
   --muted-foreground: #b0b0b0;
   --accent: #8b0000; /* Vermelho escuro */
