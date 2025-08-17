@@ -1,23 +1,25 @@
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button.jsx'
 import { Input } from '@/components/ui/input.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
-import { 
-  ShoppingCart, 
+import {
+  ShoppingCart,
   Shield,
-  Search, 
-  Menu, 
+  Search,
+  Menu,
 } from 'lucide-react'
 import { useState } from 'react'
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const navigate = useNavigate()
 
   return (
     <header className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
             <div className="flex items-center space-x-2">
               <Shield className="w-8 h-8 text-primary" />
               <span className="text-2xl font-bold text-foreground">
@@ -28,9 +30,6 @@ export function Header() {
 
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
-              Home
-            </a>
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
               Rifas Ativas
             </a>
@@ -62,7 +61,7 @@ export function Header() {
 
             {/* User Actions */}
             <div className="hidden md:flex items-center space-x-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
                 Entrar
               </Button>
               <Button size="sm" className="bg-primary hover:bg-primary/90">
@@ -86,9 +85,6 @@ export function Header() {
         {isMenuOpen && (
           <div className="md:hidden border-t border-border py-4">
             <nav className="flex flex-col space-y-4">
-              <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
-                Home
-              </a>
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
                 Rifas Ativas
               </a>
@@ -100,7 +96,7 @@ export function Header() {
               </a>
               <div className="pt-4 border-t border-border">
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => navigate('/login')}>
                     Entrar
                   </Button>
                   <Button size="sm" className="flex-1 bg-primary hover:bg-primary/90">
@@ -115,4 +111,3 @@ export function Header() {
     </header>
   )
 }
-
