@@ -74,14 +74,19 @@ export function RaffleCard({ raffle }) {
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0">
-        <Button 
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
-          size="lg"
-        >
-          <Target className="w-4 h-4 mr-2" />
-          Comprar Bilhetes
-        </Button>
+      <CardFooter className="p-4 pt-0 flex flex-col items-center">
+        <h4 className="text-lg font-bold text-foreground mb-3">Participe</h4>
+        <div className="flex space-x-2 w-full">
+          <Button variant="outline" className="flex-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+            100
+          </Button>
+          <Button variant="outline" className="flex-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+            500
+          </Button>
+          <Button variant="outline" className="flex-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+            1000
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   )
