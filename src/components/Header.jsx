@@ -48,25 +48,14 @@ export function Header() {
               <Search className="w-5 h-5" />
             </Button>
 
-            {/* Cart */}
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="w-5 h-5" />
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center p-0 text-xs bg-accent"
-              >
-                3
-              </Badge>
-            </Button>
+
 
             {/* User Actions */}
             <div className="hidden md:flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
                 Entrar
               </Button>
-              <Button size="sm" className="bg-primary hover:bg-primary/90">
-                Cadastrar
-              </Button>
+
             </div>
 
             {/* Mobile Menu */}
@@ -99,9 +88,7 @@ export function Header() {
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => navigate('/login')}>
                     Entrar
                   </Button>
-                  <Button size="sm" className="flex-1 bg-primary hover:bg-primary/90">
-                    Cadastrar
-                  </Button>
+
                 </div>
               </div>
             </nav>
