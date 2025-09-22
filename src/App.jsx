@@ -8,6 +8,7 @@ import { mockRaffles, getFilteredRaffles } from './data/mockRaffles.js'
 import { LoginPage } from './components/LoginPage.jsx'
 import { RaffleDetailsPage } from './components/RaffleDetailsPage.jsx'
 import { ForgotPasswordPage } from './components/ForgotPasswordPage.jsx'
+import { CheckoutPage } from './components/CheckoutPage.jsx'
 import { Layout } from './components/Layout.jsx'
 import './App.css'
 
@@ -31,6 +32,7 @@ function App() {
         <Route path="/login" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><LoginPage /></div></Layout>} />
         <Route path="/forgot-password" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><ForgotPasswordPage /></div></Layout>} />
         <Route path="/raffle/:id" element={<Layout><RaffleDetailsPage /></Layout>} />
+        <Route path="/checkout" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><CheckoutPage /></div></Layout>} />
         <Route path="/" element={
           <Layout>
             <HeroSection />
