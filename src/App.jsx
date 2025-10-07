@@ -32,8 +32,8 @@ function AppContent() {
     setFilters(newFilters);
   };
 
-  if (loading) return <p>Carregando rifas...</p>;
-  if (error) return <p>Erro ao carregar rifas: {error.message}</p>;
+  // if (loading) return <p>Carregando rifas...</p>;
+  // if (error) return <p>Erro ao carregar rifas: {error.message}</p>;
 
   return (
     <Layout>
