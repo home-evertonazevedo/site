@@ -6,6 +6,7 @@ import { HeroSection } from './components/HeroSection.jsx';
 import { FilterBar } from './components/FilterBar.jsx';
 import { RaffleCard } from './components/RaffleCard.jsx';
 import { LoginPage } from './components/LoginPage.jsx';
+import { RegisterPage } from './components/RegisterPage.jsx';
 import { RaffleDetailsPage } from './components/RaffleDetailsPage.jsx';
 import { ForgotPasswordPage } from './components/ForgotPasswordPage.jsx';
 import { CheckoutPage } from './components/CheckoutPage.jsx';
@@ -83,6 +84,7 @@ function App() {
       <RaffleProvider>
         <Routes>
           <Route path="/login" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><LoginPage /></div></Layout>} />
+          <Route path="/register" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><RegisterPage /></div></Layout>} />
           <Route path="/forgot-password" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><ForgotPasswordPage /></div></Layout>} />
           <Route path="/raffle/:id" element={<Layout><RaffleDetailsPage /></Layout>} />
           <Route path="/checkout" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><CheckoutPage /></div></Layout>} />

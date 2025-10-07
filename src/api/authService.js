@@ -29,6 +29,15 @@ const authService = {
       throw error.response ? error.response.data : error.message;
     }
   },
+
+  register: async (userData) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/register`, userData);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error.message;
+    }
+  },
 };
 
 export default authService;
