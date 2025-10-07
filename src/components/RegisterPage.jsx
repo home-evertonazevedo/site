@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Button } from "@/components/ui/button.jsx";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
+
 import authService from "../api/authService";
 
 export function RegisterPage() {
@@ -15,8 +15,7 @@ export function RegisterPage() {
     inscricao: '',
     cellphone: '',
     password: '',
-    confirmPassword: '',
-    role: 'USER'
+    confirmPassword: ''
   });
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -30,12 +29,7 @@ export function RegisterPage() {
     }));
   };
 
-  const handleRoleChange = (value) => {
-    setFormData(prev => ({
-      ...prev,
-      role: value
-    }));
-  };
+
 
   const formatCPF = (value) => {
     // Remove tudo que não é dígito
@@ -153,7 +147,7 @@ export function RegisterPage() {
         inscricao: formData.inscricao.replace(/\D/g, ''), // Remove formatação do CPF
         cellphone: formData.cellphone.replace(/\D/g, ''), // Remove formatação do telefone
         password: formData.password,
-        role: formData.role
+        role: 'USER' // Sempre enviar como USER
       };
       
       const response = await authService.register(dataToSend);
@@ -242,18 +236,7 @@ export function RegisterPage() {
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="role" className="text-foreground">Tipo de Usuário</Label>
-              <Select value={formData.role} onValueChange={handleRoleChange}>
-                <SelectTrigger className="bg-background border-border text-foreground">
-                  <SelectValue placeholder="Selecione o tipo de usuário" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USER">Usuário</SelectItem>
-                  <SelectItem value="ADMIN">Administrador</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
             
             <div className="space-y-2">
               <Label htmlFor="password" className="text-foreground">Senha</Label>
