@@ -136,5 +136,35 @@ from origin 'http://localhost:5173' has been blocked by CORS policy
 
 ---
 
+## Atualização - Campo Role Removido
+
+### Alteração Solicitada (07/10/2025)
+- **Requisito**: Remover campo "Tipo de Usuário" da interface
+- **Comportamento**: Sempre enviar `role: "USER"` fixo na requisição
+
+### Implementação Realizada
+- ✅ Removido campo "Tipo de Usuário" do formulário
+- ✅ Configurado envio automático de `role: "USER"`
+- ✅ Removidos imports desnecessários do Select component
+- ✅ Simplificado estado do formulário
+- ✅ Interface mais limpa e focada
+
+### Estrutura de Dados Atualizada
+
+```json
+{
+  "name": "Teste Usuario",
+  "email": "teste@email.com", 
+  "inscricao": "98765432100",
+  "cellphone": "11123456789",
+  "password": "123456",
+  "role": "USER"
+}
+```
+
+---
+
 **Status**: ✅ Implementação concluída e commitada no repositório
-**Commit**: `7692d8c - feat: implementar integração com API de registro de usuário`
+**Commits**: 
+- `7692d8c - feat: implementar integração com API de registro de usuário`
+- `3074f8f - refactor: remover campo role do formulário de registro`

@@ -1,11 +1,9 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import apiClient from './apiClient';
 
 const authService = {
   forgotPassword: async (inscricao) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/forgot-password`, { inscricao });
+      const response = await apiClient.post('/forgot-password', { inscricao });
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error.message;
@@ -14,7 +12,7 @@ const authService = {
 
   resetPassword: async (token, password) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/reset-password`, { token, password });
+      const response = await apiClient.post('/reset-password', { token, password });
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error.message;
@@ -23,7 +21,7 @@ const authService = {
 
   login: async (inscricao, password) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/login`, { inscricao, password });
+      const response = await apiClient.post('/login', { inscricao, password });
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error.message;
@@ -32,7 +30,7 @@ const authService = {
 
   register: async (userData) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/register`, userData);
+      const response = await apiClient.post('/register', userData);
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error.message;
