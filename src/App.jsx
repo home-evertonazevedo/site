@@ -1,12 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useState } from 'react';
 import { RaffleProvider, useRaffle } from './contexts/RaffleContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { Header } from './components/Header.jsx';
 import { HeroSection } from './components/HeroSection.jsx';
 import { FilterBar } from './components/FilterBar.jsx';
 import { RaffleCard } from './components/RaffleCard.jsx';
 import { LoginPage } from './components/LoginPage.jsx';
 import { RegisterPage } from './components/RegisterPage.jsx';
+import { Dashboard } from './components/Dashboard.jsx';
 import { RaffleDetailsPage } from './components/RaffleDetailsPage.jsx';
 import { ForgotPasswordPage } from './components/ForgotPasswordPage.jsx';
 import { CheckoutPage } from './components/CheckoutPage.jsx';
@@ -81,16 +83,19 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <RaffleProvider>
-        <Routes>
-          <Route path="/login" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><LoginPage /></div></Layout>} />
-          <Route path="/register" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><RegisterPage /></div></Layout>} />
-          <Route path="/forgot-password" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><ForgotPasswordPage /></div></Layout>} />
-          <Route path="/raffle/:id" element={<Layout><RaffleDetailsPage /></Layout>} />
-          <Route path="/checkout" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><CheckoutPage /></div></Layout>} />
-          <Route path="/" element={<AppContent />} />
-        </Routes>
-      </RaffleProvider>
+      <AuthProvider>
+        <RaffleProvider>
+          <Routes>
+            <Route path="/login" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><LoginPage /></div></Layout>} />
+            <Route path="/register" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><RegisterPage /></div></Layout>} />
+            <Route path="/forgot-password" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><ForgotPasswordPage /></div></Layout>} />
+            <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+            <Route path="/raffle/:id" element={<Layout><RaffleDetailsPage /></Layout>} />
+            <Route path="/checkout" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><CheckoutPage /></div></Layout>} />
+            <Route path="/" element={<AppContent />} />
+          </Routes>
+        </RaffleProvider>
+      </AuthProvider>
     </Router>
   );
 }

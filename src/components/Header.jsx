@@ -3,16 +3,40 @@ import { Button } from '@/components/ui/button.jsx'
 import { Input } from '@/components/ui/input.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu.jsx'
+import {
   ShoppingCart,
   Shield,
   Search,
   Menu,
+  User,
+  LogOut,
+  Settings,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const { user, isAuthenticated, logout, getFirstName } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+    setIsMenuOpen(false)
+  }
+
+  const handleDashboard = () => {
+    navigate('/dashboard')
+    setIsMenuOpen(false)
+  }
 
   return (
     <header className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm">
@@ -52,10 +76,37 @@ export function Header() {
 
             {/* User Actions */}
             <div className="hidden md:flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
-                Entrar
-              </Button>
-
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      {getFirstName()}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleDashboard}>
+                      <User className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="w-4 h-4 mr-2" />
+                      Configurações
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
+                  Entrar
+                </Button>
+              )}
             </div>
 
             {/* Mobile Menu */}
@@ -84,12 +135,28 @@ export function Header() {
                 Contato
               </a>
               <div className="pt-4 border-t border-border">
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => navigate('/login')}>
-                    Entrar
-                  </Button>
-
-                </div>
+                {isAuthenticated ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md">
+                      <User className="w-4 h-4" />
+                      <span className="font-medium">{getFirstName()}</span>
+                    </div>
+                    <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleDashboard}>
+                      <User className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleLogout}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sair
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => navigate('/login')}>
+                      Entrar
+                    </Button>
+                  </div>
+                )}
               </div>
             </nav>
           </div>

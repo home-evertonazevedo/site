@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Button } from "@/components/ui/button.jsx";
+import { useAuth } from '../contexts/AuthContext';
 import authService from "../api/authService";
 
 export function LoginPage() {
@@ -10,19 +12,34 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
+    setIsLoading(true);
+    
     try {
-      const response = await authService.login(inscricao, password);
-      setMessage(response.message || 'Login bem-sucedido!');
-      // Redirecionar ou armazenar token
-      console.log('Login successful:', response);
+      const result = await login(inscricao, password);
+      
+      if (result.success) {
+        setMessage('Login realizado com sucesso!');
+        // Redirecionar para o dashboard após 1 segundo
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
+      } else {
+        setError(result.error || 'Erro ao fazer login');
+      }
     } catch (err) {
-      setError(err.message || 'Erro ao fazer login.');
+      setError('Erro inesperado ao fazer login');
       console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -77,8 +94,12 @@ export function LoginPage() {
             </div>
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             {message && <p className="text-green-500 text-sm mt-2">{message}</p>}
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold mt-4">
-              Entrar
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold mt-4"
+            >
+              {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
           <div className="text-center text-sm text-muted-foreground">

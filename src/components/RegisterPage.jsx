@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Button } from "@/components/ui/button.jsx";
-
-import authService from "../api/authService";
+import { useAuth } from '../contexts/AuthContext';
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const { register } = useAuth();
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -150,17 +151,19 @@ export function RegisterPage() {
         role: 'USER' // Sempre enviar como USER
       };
       
-      const response = await authService.register(dataToSend);
-      setMessage('Usuário registrado com sucesso!');
+      const result = await register(dataToSend);
       
-      // Redirecionar para login após 2 segundos
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
-      
-      console.log('Registration successful:', response);
+      if (result.success) {
+        setMessage('Usuário registrado e logado com sucesso!');
+        // Redirecionar para dashboard após 1 segundo
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
+      } else {
+        setError(result.error || 'Erro ao registrar usuário');
+      }
     } catch (err) {
-      setError(err.message || 'Erro ao registrar usuário.');
+      setError('Erro inesperado ao registrar usuário');
       console.error('Registration error:', err);
     } finally {
       setLoading(false);
