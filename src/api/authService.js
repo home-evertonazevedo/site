@@ -36,6 +36,15 @@ const authService = {
       throw error.response ? error.response.data : error.message;
     }
   },
+
+  getUser: async (userId) => {
+    try {
+      const response = await apiClient.get(`/users/${userId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error.message;
+    }
+  },
 };
 
 export default authService;

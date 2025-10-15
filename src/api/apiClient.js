@@ -16,6 +16,12 @@ const apiClient = axios.create({
 // Interceptor para requisições
 apiClient.interceptors.request.use(
   (config) => {
+    // Adicionar token de autorização se existir
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
     // Log da requisição para debug
     console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data);
     return config;

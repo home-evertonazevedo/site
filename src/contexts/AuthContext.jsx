@@ -40,23 +40,64 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const response = await authService.login(inscricao, password);
       
-      if (response.token && response.user) {
-        // Salvar token e dados do usuário
+      if (response.token) {
+        // Salvar token
         localStorage.setItem('authToken', response.token);
-        localStorage.setItem('userData', JSON.stringify(response.user));
         
-        setUser(response.user);
-        setIsAuthenticated(true);
-        
-        return { success: true, user: response.user };
+        // Decodificar o token JWT para obter dados do usuário
+        try {
+          const tokenPayload = JSON.parse(atob(response.token.split('.')[1]));
+          
+          // Buscar dados completos do usuário da API
+          try {
+            const fullUserData = await authService.getUser(tokenPayload.id);
+            
+            const userData = {
+              id: fullUserData.id,
+              name: fullUserData.name,
+              email: fullUserData.email,
+              inscricao: fullUserData.inscricao,
+              cellphone: fullUserData.cellphone,
+              role: fullUserData.role || tokenPayload.role,
+              createdAt: fullUserData.createdAt
+            };
+            
+            localStorage.setItem('userData', JSON.stringify(userData));
+            setUser(userData);
+            setIsAuthenticated(true);
+            
+            return { success: true, user: userData };
+          } catch (userFetchError) {
+            console.warn('Erro ao buscar dados do usuário, usando dados do token:', userFetchError);
+            
+            // Fallback: usar dados do token se não conseguir buscar da API
+            const userData = {
+              id: tokenPayload.id,
+              inscricao: tokenPayload.inscricao,
+              role: tokenPayload.role,
+              name: tokenPayload.inscricao, // Usar CPF como nome temporário
+              email: '',
+              cellphone: ''
+            };
+            
+            localStorage.setItem('userData', JSON.stringify(userData));
+            setUser(userData);
+            setIsAuthenticated(true);
+            
+            return { success: true, user: userData };
+          }
+        } catch (decodeError) {
+          console.error('Erro ao decodificar token:', decodeError);
+          throw new Error('Token inválido');
+        }
       } else {
-        throw new Error('Resposta inválida do servidor');
+        throw new Error('Token não encontrado na resposta');
       }
     } catch (error) {
       console.error('Erro no login:', error);
       return { 
         success: false, 
-        error: error.message || 'Erro ao fazer login' 
+        error: error.message || 'Credenciais inválidas' 
       };
     } finally {
       setLoading(false);
