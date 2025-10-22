@@ -12,15 +12,17 @@ import {
   Eye,
   Edit,
   Trash2,
-  MoreVertical
+  Plus
 } from 'lucide-react';
 import raffleService from '../../api/raffleService';
+import { CreateRafflePage } from './CreateRafflePage';
 
 export function RafflesList() {
   const [raffles, setRaffles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     fetchRaffles();
@@ -147,6 +149,11 @@ export function RafflesList() {
     acc + raffle.ticketsSold, 0
   );
 
+  // Se estiver criando uma nova rifa, mostrar o formulário
+  if (isCreating) {
+    return <CreateRafflePage onBack={() => setIsCreating(false)} />;
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -160,8 +167,11 @@ export function RafflesList() {
             Visualize e gerencie todas as rifas do sistema
           </p>
         </div>
-        <Button className="gap-2">
-          <TrendingUp className="w-4 h-4" />
+        <Button 
+          onClick={() => setIsCreating(true)}
+          className="gap-2"
+        >
+          <Plus className="w-4 h-4" />
           Nova Rifa
         </Button>
       </div>
@@ -258,7 +268,12 @@ export function RafflesList() {
               <p className="text-muted-foreground mb-4">
                 Nenhuma rifa encontrada
               </p>
-              <Button variant="outline">
+              <Button 
+                variant="outline"
+                onClick={() => setIsCreating(true)}
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
                 Criar Nova Rifa
               </Button>
             </div>
