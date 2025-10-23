@@ -8,7 +8,7 @@ import { ArrowLeft, Plus, Loader2 } from 'lucide-react';
 import raffleService from '../../api/raffleService';
 import { useAuth } from '../../contexts/AuthContext';
 
-export function CreateRafflePage({ onBack }) {
+export function CreateRafflePage({ onBack, onSuccess }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -111,7 +111,11 @@ export function CreateRafflePage({ onBack }) {
 
       // Redirecionar após 2 segundos
       setTimeout(() => {
-        onBack();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          onBack();
+        }
       }, 2000);
     } catch (err) {
       console.error('Erro ao criar rifa:', err);

@@ -12,7 +12,8 @@ import {
   Eye,
   Edit,
   Trash2,
-  Plus
+  Plus,
+  AlertCircle
 } from 'lucide-react';
 import raffleService from '../../api/raffleService';
 import { CreateRafflePage } from './CreateRafflePage';
@@ -20,6 +21,7 @@ import { CreateRafflePage } from './CreateRafflePage';
 export function RafflesList() {
   const [raffles, setRaffles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isCreating, setIsCreating] = useState(false);
@@ -31,74 +33,46 @@ export function RafflesList() {
   const fetchRaffles = async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await raffleService.getAllRaffles();
       
-      // Simular dados completos com status e tickets vendidos
-      const rafflesWithStats = response.map(raffle => ({
-        ...raffle,
-        status: raffle.status || 'active', // active, completed, cancelled
-        ticketsSold: Math.floor(Math.random() * raffle.totalTickets),
-        soldPercentage: Math.floor((Math.random() * raffle.totalTickets) / raffle.totalTickets * 100)
-      }));
+      // Processar dados da API
+      const rafflesWithStats = response.map(raffle => {
+        // Determinar status baseado na resposta da API
+        let status = 'active';
+        if (raffle.status) {
+          status = raffle.status.toLowerCase();
+        }
+        
+        // Calcular percentual vendido
+        const ticketsSold = raffle.ticketsSold || 0;
+        const totalTickets = raffle.totalTickets || 1;
+        const soldPercentage = totalTickets > 0 
+          ? Math.round((ticketsSold / totalTickets) * 100)
+          : 0;
+        
+        return {
+          ...raffle,
+          status: status,
+          ticketsSold: raffle.ticketsSold || 0,
+          soldPercentage: soldPercentage
+        };
+      });
       
       setRaffles(rafflesWithStats);
-    } catch (error) {
-      console.error('Erro ao buscar rifas:', error);
-      // Dados mock para demonstração
-      const mockRaffles = [
-        {
-          id: 1,
-          title: 'Rifa Airsoft M4A1 Completo',
-          description: 'Rifle airsoft M4A1 com acessórios completos',
-          ticketPrice: 10,
-          totalTickets: 100,
-          ticketsSold: 78,
-          soldPercentage: 78,
-          status: 'active',
-          createdAt: '2025-10-01',
-          userId: 1
-        },
-        {
-          id: 2,
-          title: 'Kit Equipamentos Táticos',
-          description: 'Kit completo de equipamentos táticos',
-          ticketPrice: 15,
-          totalTickets: 50,
-          ticketsSold: 50,
-          soldPercentage: 100,
-          status: 'completed',
-          createdAt: '2025-09-15',
-          userId: 1
-        },
-        {
-          id: 3,
-          title: 'Pistola Airsoft Glock',
-          description: 'Pistola airsoft Glock 18C',
-          ticketPrice: 5,
-          totalTickets: 200,
-          ticketsSold: 45,
-          soldPercentage: 22,
-          status: 'active',
-          createdAt: '2025-10-05',
-          userId: 1
-        },
-        {
-          id: 4,
-          title: 'Colete Tático Premium',
-          description: 'Colete tático com múltiplos compartimentos',
-          ticketPrice: 8,
-          totalTickets: 75,
-          ticketsSold: 0,
-          soldPercentage: 0,
-          status: 'cancelled',
-          createdAt: '2025-09-20',
-          userId: 1
-        }
-      ];
-      setRaffles(mockRaffles);
+    } catch (err) {
+      console.error('Erro ao buscar rifas:', err);
+      setError('Erro ao carregar rifas. Tente novamente.');
+      setRaffles([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCreateSuccess = () => {
+    setIsCreating(false);
+    // Recarregar a lista de rifas após criar uma nova
+    fetchRaffles();
   };
 
   const formatCurrency = (value) => {
@@ -151,7 +125,7 @@ export function RafflesList() {
 
   // Se estiver criando uma nova rifa, mostrar o formulário
   if (isCreating) {
-    return <CreateRafflePage onBack={() => setIsCreating(false)} />;
+    return <CreateRafflePage onBack={() => setIsCreating(false)} onSuccess={handleCreateSuccess} />;
   }
 
   return (
@@ -205,6 +179,26 @@ export function RafflesList() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Mensagem de Erro */}
+      {error && (
+        <Card className="bg-red-500/10 border-red-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              <p className="text-sm text-red-600">{error}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={fetchRaffles}
+                className="ml-auto"
+              >
+                Tentar Novamente
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Estatísticas Rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -262,6 +256,19 @@ export function RafflesList() {
                 </div>
               ))}
             </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">
+                Erro ao carregar as rifas
+              </p>
+              <Button 
+                variant="outline"
+                onClick={fetchRaffles}
+              >
+                Tentar Novamente
+              </Button>
+            </div>
           ) : filteredRaffles.length === 0 ? (
             <div className="text-center py-12">
               <List className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -306,7 +313,7 @@ export function RafflesList() {
                         <div className="flex items-center gap-2">
                           <Ticket className="w-4 h-4 text-muted-foreground" />
                           <span className="text-muted-foreground">
-                            {raffle.ticketPrice === 1 ? 'R$ 1,00' : `R$ ${raffle.ticketPrice.toFixed(2)}`}
+                            {formatCurrency(raffle.ticketPrice)}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
