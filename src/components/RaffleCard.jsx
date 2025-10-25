@@ -2,13 +2,18 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card.
 import { Button } from '@/components/ui/button.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { Progress } from '@/components/ui/progress.jsx'
-import { Clock, Target } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Clock, Target, ShoppingCart } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 
 export function RaffleCard({ raffle }) {
+  const navigate = useNavigate();
   const soldTickets = 0; // Placeholder, API does not provide soldTickets
   const progressPercentage = (soldTickets / raffle.totalTickets) * 100;
   const drawDate = new Date(raffle.createdAt).toLocaleDateString(); // Using createdAt as placeholder for drawDate
+
+  const handleBuyClick = () => {
+    navigate(`/checkout/${raffle.id}`);
+  };
 
 
 
@@ -63,17 +68,13 @@ export function RaffleCard({ raffle }) {
 
       <CardFooter className="p-4 pt-0 flex flex-col items-center">
         <h4 className="text-lg font-bold text-foreground mb-3">Participe</h4>
-        <div className="flex space-x-2 w-full">
-          <Button variant="outline" className="flex-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-            100
-          </Button>
-          <Button variant="outline" className="flex-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-            500
-          </Button>
-          <Button variant="outline" className="flex-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-            1000
-          </Button>
-        </div>
+        <Button 
+          onClick={handleBuyClick}
+          className="w-full bg-primary hover:bg-primary/90 text-white gap-2"
+        >
+          <ShoppingCart className="w-4 h-4" />
+          Comprar Bilhetes
+        </Button>
       </CardFooter>
     </Card>
   )

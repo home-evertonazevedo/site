@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
@@ -13,12 +14,14 @@ import {
   Edit,
   Trash2,
   Plus,
-  AlertCircle
+  AlertCircle,
+  ShoppingCart
 } from 'lucide-react';
 import raffleService from '../../api/raffleService';
 import { CreateRafflePage } from './CreateRafflePage';
 
 export function RafflesList() {
+  const navigate = useNavigate();
   const [raffles, setRaffles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -354,6 +357,15 @@ export function RafflesList() {
 
                     {/* Ações */}
                     <div className="flex gap-2 w-full md:w-auto">
+                      <Button
+                        onClick={() => navigate(`/checkout/${raffle.id}`)}
+                        size="sm"
+                        className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90 text-white"
+                        title="Comprar bilhetes"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        <span className="hidden sm:inline">Comprar</span>
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"

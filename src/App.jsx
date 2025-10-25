@@ -91,7 +91,7 @@ function App() {
             <Route path="/forgot-password" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><ForgotPasswordPage /></div></Layout>} />
             <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
             <Route path="/raffle/:id" element={<Layout><RaffleDetailsPage /></Layout>} />
-            <Route path="/checkout" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><CheckoutPage /></div></Layout>} />
+            <Route path="/checkout/:raffleId" element={<Layout><div className="flex items-center justify-center flex-grow py-8"><CheckoutPage /></div></Layout>} />
             <Route path="/" element={<AppContent />} />
           </Routes>
         </RaffleProvider>
