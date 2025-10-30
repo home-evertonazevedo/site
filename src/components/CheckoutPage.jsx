@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge.jsx";
 import { Separator } from "@/components/ui/separator.jsx";
 import { useAuth } from '../contexts/AuthContext';
 import raffleService from '../api/raffleService';
-import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Loader, Copy, Clock, QrCode } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Loader, Copy, Clock, QrCode, RefreshCw } from 'lucide-react';
 
 export function CheckoutPage() {
   const { raffleId } = useParams();
@@ -23,6 +23,7 @@ export function CheckoutPage() {
   // Estados para a tela de pagamento
   const [purchase, setPurchase] = useState(null);
   const [pixData, setPixData] = useState(null);
+  const [pixError, setPixError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(15 * 60); // 15 minutos em segundos
   const [paymentExpired, setPaymentExpired] = useState(false);
@@ -113,6 +114,7 @@ export function CheckoutPage() {
     try {
       setPurchasing(true);
       setError(null);
+      setPixError(null);
 
       const purchaseData = {
         raffleId: parseInt(raffleId),
@@ -123,7 +125,16 @@ export function CheckoutPage() {
       
       // Armazenar dados da compra e PIX
       setPurchase(response);
-      setPixData(response.pixData);
+      
+      // Verificar se houve erro ao gerar o PIX
+      if (response.pixError) {
+        setPixError(response.pixError);
+        setPixData(null);
+      } else {
+        setPixData(response.pixData);
+        setPixError(null);
+      }
+      
       setTimeRemaining(15 * 60); // Resetar timer
       setPaymentExpired(false);
     } catch (err) {
@@ -137,8 +148,30 @@ export function CheckoutPage() {
   const handleBackToCheckout = () => {
     setPurchase(null);
     setPixData(null);
+    setPixError(null);
     setTimeRemaining(15 * 60);
     setPaymentExpired(false);
+  };
+
+  const handleRetryPixGeneration = async () => {
+    if (!purchase) return;
+    
+    try {
+      setPixError(null);
+      setPurchasing(true);
+      
+      // Voltar para a tela de checkout e tentar novamente
+      handleBackToCheckout();
+    } catch (err) {
+      setPixError({
+        message: 'Erro ao tentar novamente',
+        details: err?.message,
+        retryable: true,
+      });
+      console.error('Erro ao tentar gerar PIX novamente:', err);
+    } finally {
+      setPurchasing(false);
+    }
   };
 
   const handleGoToDashboard = () => {
@@ -147,6 +180,89 @@ export function CheckoutPage() {
 
   if (!user) {
     return null;
+  }
+
+  // Tela de Erro de PIX (Compra criada, mas PIX falhou)
+  if (pixError && purchase && !pixData) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Erro ao Gerar Pagamento</h1>
+          <p className="text-muted-foreground">
+            Sua compra foi criada, mas houve um problema ao gerar o código PIX
+          </p>
+        </div>
+
+        {/* Status da Compra */}
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="space-y-2">
+              <p className="text-sm text-blue-700">
+                <strong>ID da Compra:</strong> #{purchase.id}
+              </p>
+              <p className="text-sm text-blue-700">
+                <strong>Bilhetes:</strong> {purchase.ticketNumbers?.length || quantity}
+              </p>
+              <p className="text-sm text-blue-700">
+                <strong>Valor:</strong> {formatCurrency(calculateTotal())}
+              </p>
+              <p className="text-sm text-blue-700">
+                <strong>Status:</strong> Aguardando Pagamento
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Erro */}
+        <Card className="mb-6 border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="w-5 h-5" />
+              {pixError.message}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-red-600 mb-4">
+              {pixError.details}
+            </p>
+            <div className="bg-red-100 border border-red-300 rounded p-3">
+              <p className="text-xs text-red-700">
+                <strong>Dica:</strong> Verifique sua conexão com a internet e tente novamente. Se o problema persistir, entre em contato com o suporte.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ações */}
+        <div className="flex gap-3">
+          <Button
+            onClick={handleRetryPixGeneration}
+            className="flex-1 gap-2"
+            disabled={purchasing}
+          >
+            {purchasing ? (
+              <>
+                <Loader className="w-4 h-4 animate-spin" />
+                Tentando novamente...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4" />
+                Tentar Novamente
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={handleGoToDashboard}
+          >
+            Ir para Dashboard
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   // Tela de Pagamento PIX
@@ -304,37 +420,28 @@ export function CheckoutPage() {
   // Tela de Checkout (Seleção de Quantidade)
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-center py-12">
-              <Loader className="w-8 h-8 animate-spin text-primary" />
-              <span className="ml-2 text-muted-foreground">Carregando detalhes da rifa...</span>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="container mx-auto px-4 py-8 max-w-2xl flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Loader className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Carregando detalhes da rifa...</p>
+        </div>
       </div>
     );
   }
 
-  if (!raffle) {
+  if (error) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600" />
-              <div>
-                <h3 className="font-semibold text-red-900">Rifa não encontrada</h3>
-                <p className="text-sm text-red-700 mt-1">
-                  A rifa que você está tentando acessar não existe ou foi removida.
-                </p>
-              </div>
-            </div>
-            <Button 
-              onClick={() => navigate('/')} 
-              className="mt-4 w-full"
-            >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="w-5 h-5" />
+              Erro ao Carregar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={() => navigate('/raffles')}>
               Voltar para Rifas
             </Button>
           </CardContent>
@@ -343,197 +450,169 @@ export function CheckoutPage() {
     );
   }
 
+  if (!raffle) {
+    return null;
+  }
+
+  // Tela de Checkout
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      {/* Error Message */}
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-foreground mb-2">Checkout</h1>
+        <p className="text-muted-foreground">
+          Selecione a quantidade de bilhetes que deseja comprar
+        </p>
+      </div>
+
+      {/* Erro */}
       {error && (
         <Card className="mb-6 border-red-200 bg-red-50">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600" />
-              <div>
-                <h3 className="font-semibold text-red-900">Erro</h3>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
-              </div>
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Raffle Details */}
+      {/* Detalhes da Rifa */}
       <Card className="mb-6">
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-2xl">{raffle.title}</CardTitle>
-              <CardDescription className="mt-2">
-                {raffle.description}
-              </CardDescription>
-            </div>
-            <Badge variant="outline" className="ml-2">
-              Rifa #{raffle.id}
-            </Badge>
-          </div>
+          <CardTitle>{raffle.title}</CardTitle>
+          <CardDescription>{raffle.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Preço por Bilhete</p>
-              <p className="text-2xl font-bold text-primary">
-                {formatCurrency(raffle.ticketPrice)}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Bilhetes Disponíveis</p>
-              <p className="text-2xl font-bold">
-                {raffle.totalTickets.toLocaleString('pt-BR')}
-              </p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Preço por Bilhete</p>
+                <p className="text-2xl font-bold">{formatCurrency(raffle.ticketPrice)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Bilhetes Disponíveis</p>
+                <p className="text-2xl font-bold">{raffle.totalTickets}</p>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Quantity Selector */}
+      {/* Seleção de Quantidade */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
-            Selecione a Quantidade
+            Quantidade de Bilhetes
           </CardTitle>
-          <CardDescription>
-            Escolha quantos bilhetes deseja comprar
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Quick Increment Buttons */}
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleQuickIncrement(10)}
-              disabled={quantity + 10 > raffle.totalTickets}
-              className="text-xs"
-            >
-              +10
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleQuickIncrement(100)}
-              disabled={quantity + 100 > raffle.totalTickets}
-              className="text-xs"
-            >
-              +100
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleQuickIncrement(1000)}
-              disabled={quantity + 1000 > raffle.totalTickets}
-              className="text-xs"
-            >
-              +1000
-            </Button>
-          </div>
-
-          {/* Quantity Input */}
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handleQuantityChange(quantity - 1)}
-              disabled={quantity <= 1}
-            >
-              <Minus className="w-4 h-4" />
-            </Button>
-
-            <div className="flex-1">
-              <input
-                type="number"
-                min="1"
-                max={raffle.totalTickets}
-                value={quantity}
-                onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
-                className="w-full px-4 py-2 border rounded-md text-center text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+        <CardContent>
+          <div className="space-y-4">
+            {/* Controle de Quantidade */}
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handleQuantityChange(quantity - 1)}
+                disabled={quantity <= 1}
+              >
+                <Minus className="w-4 h-4" />
+              </Button>
+              <div className="flex-1">
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                  className="w-full px-4 py-2 border border-border rounded-lg text-center text-lg font-semibold"
+                  min="1"
+                  max={raffle.totalTickets}
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handleQuantityChange(quantity + 1)}
+                disabled={quantity >= raffle.totalTickets}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
             </div>
 
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handleQuantityChange(quantity + 1)}
-              disabled={quantity >= raffle.totalTickets}
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {quantity > raffle.totalTickets && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-yellow-700">
-                Quantidade máxima de bilhetes disponíveis: {raffle.totalTickets}
-              </p>
+            {/* Botões de Incremento Rápido */}
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handleQuickIncrement(10)}
+                disabled={quantity + 10 > raffle.totalTickets}
+              >
+                +10
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handleQuickIncrement(100)}
+                disabled={quantity + 100 > raffle.totalTickets}
+              >
+                +100
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handleQuickIncrement(1000)}
+                disabled={quantity + 1000 > raffle.totalTickets}
+              >
+                +1000
+              </Button>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Order Summary */}
-      <Card className="mb-6 border-2 border-primary">
+      {/* Resumo do Pedido */}
+      <Card className="mb-6 border-primary bg-primary/5">
         <CardHeader>
-          <CardTitle>Resumo do Pedido</CardTitle>
+          <CardTitle className="text-base">Resumo do Pedido</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">
-              {quantity} bilhete(s) × {formatCurrency(raffle.ticketPrice)}
-            </span>
-            <span className="font-semibold">
-              {formatCurrency(raffle.ticketPrice * quantity)}
-            </span>
-          </div>
-
-          <Separator />
-
-          <div className="flex justify-between items-center text-lg">
-            <span className="font-semibold">Total</span>
-            <span className="text-2xl font-bold text-primary">
-              {formatCurrency(calculateTotal())}
-            </span>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Preço Unitário</span>
+              <span className="font-semibold">{formatCurrency(raffle.ticketPrice)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Quantidade</span>
+              <span className="font-semibold">{quantity} bilhete(s)</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between text-lg">
+              <span className="font-bold">Total</span>
+              <span className="font-bold text-primary">{formatCurrency(calculateTotal())}</span>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={() => navigate('/')}
-          disabled={purchasing}
-        >
-          Cancelar
-        </Button>
-        <Button
-          className="flex-1"
-          onClick={handlePurchase}
-          disabled={purchasing || quantity <= 0}
-          size="lg"
-        >
-          {purchasing ? (
-            <>
-              <Loader className="w-4 h-4 mr-2 animate-spin" />
-              Processando...
-            </>
-          ) : (
-            <>
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Confirmar Compra
-            </>
-          )}
-        </Button>
-      </div>
+      {/* Botão de Compra */}
+      <Button
+        onClick={handlePurchase}
+        disabled={purchasing || quantity === 0}
+        size="lg"
+        className="w-full gap-2"
+      >
+        {purchasing ? (
+          <>
+            <Loader className="w-4 h-4 animate-spin" />
+            Processando...
+          </>
+        ) : (
+          <>
+            <ShoppingCart className="w-4 h-4" />
+            Confirmar Compra
+          </>
+        )}
+      </Button>
     </div>
   );
 }
