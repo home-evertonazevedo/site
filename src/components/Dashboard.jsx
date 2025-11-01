@@ -4,51 +4,37 @@ import { Button } from "@/components/ui/button.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { Separator } from "@/components/ui/separator.jsx";
 import { useAuth } from '../contexts/AuthContext';
-import { User, Mail, Phone, CreditCard, Calendar, Package, LogOut, Edit, BarChart3, Settings } from 'lucide-react';
+import raffleService from '../api/raffleService';
+import { User, Mail, Phone, CreditCard, Calendar, Package, LogOut, Edit, BarChart3, Settings, AlertCircle, Loader } from 'lucide-react';
 import { RafflesList } from './admin/RafflesList';
 
 export function Dashboard() {
   const { user, logout, getFirstName } = useAuth();
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
-    // Simular carregamento de compras do usuário
-    // TODO: Implementar chamada real para API de compras
-    const mockPurchases = [
-      {
-        id: 1,
-        raffleTitle: 'Rifa Airsoft M4A1 Completo',
-        ticketNumbers: ['001', '045', '123'],
-        purchaseDate: '2025-10-05',
-        status: 'active',
-        totalValue: 30.00
-      },
-      {
-        id: 2,
-        raffleTitle: 'Kit Equipamentos Táticos',
-        ticketNumbers: ['078', '156'],
-        purchaseDate: '2025-10-03',
-        status: 'completed',
-        totalValue: 20.00
-      },
-      {
-        id: 3,
-        raffleTitle: 'Pistola Airsoft Glock',
-        ticketNumbers: ['234'],
-        purchaseDate: '2025-10-01',
-        status: 'pending',
-        totalValue: 10.00
+    const fetchUserPurchases = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await raffleService.getUserPurchases();
+        setPurchases(data || []);
+      } catch (err) {
+        console.error('Erro ao buscar compras:', err);
+        setError(err?.message || 'Erro ao carregar suas participações');
+      } finally {
+        setLoading(false);
       }
-    ];
+    };
 
-    setTimeout(() => {
-      setPurchases(mockPurchases);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    if (user) {
+      fetchUserPurchases();
+    }
+  }, [user]);
 
   const formatCPF = (cpf) => {
     if (!cpf) return '';
@@ -64,16 +50,23 @@ export function Dashboard() {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
-      active: { label: 'Ativa', variant: 'default' },
-      completed: { label: 'Finalizada', variant: 'secondary' },
-      pending: { label: 'Pendente', variant: 'outline' }
+      PENDING: { label: 'Aguardando Pagamento', variant: 'outline', color: 'text-yellow-600' },
+      COMPLETED: { label: 'Pago', variant: 'default', color: 'text-green-600' },
+      CANCELLED: { label: 'Cancelado', variant: 'secondary', color: 'text-red-600' }
     };
     
-    const config = statusConfig[status] || statusConfig.pending;
+    const config = statusConfig[status] || statusConfig.PENDING;
     return (
-      <Badge variant={config.variant} className="text-xs">
+      <Badge variant={config.variant} className={`text-xs ${config.color}`}>
         {config.label}
       </Badge>
     );
@@ -242,13 +235,21 @@ export function Dashboard() {
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-muted rounded w-1/2"></div>
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <Loader className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+                      <p className="text-muted-foreground">Carregando suas participações...</p>
+                    </div>
+                  </div>
+                ) : error ? (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-red-900">Erro ao carregar</p>
+                        <p className="text-sm text-red-700">{error}</p>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 ) : purchases.length === 0 ? (
                   <div className="text-center py-8">
@@ -268,33 +269,47 @@ export function Dashboard() {
                           <div className="flex justify-between items-start mb-3">
                             <div>
                               <h4 className="font-semibold text-foreground mb-1">
-                                {purchase.raffleTitle}
+                                {purchase.raffle?.title || 'Rifa'}
                               </h4>
                               <p className="text-sm text-muted-foreground">
-                                Comprado em {formatDate(purchase.purchaseDate)}
+                                Comprado em {formatDate(purchase.createdAt)}
                               </p>
                             </div>
                             {getStatusBadge(purchase.status)}
                           </div>
                           
+                          {purchase.raffle?.description && (
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {purchase.raffle.description}
+                            </p>
+                          )}
+                          
                           <div className="flex flex-wrap gap-2 mb-3">
                             <span className="text-sm font-medium text-muted-foreground">
-                              Números:
+                              Bilhetes ({purchase.ticketNumbers?.length || 0}):
                             </span>
-                            {purchase.ticketNumbers.map((number) => (
-                              <Badge key={number} variant="secondary" className="text-xs">
-                                {number}
-                              </Badge>
-                            ))}
+                            {purchase.ticketNumbers && purchase.ticketNumbers.length > 0 ? (
+                              purchase.ticketNumbers.map((number) => (
+                                <Badge key={number} variant="secondary" className="text-xs">
+                                  {number}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Nenhum bilhete</span>
+                            )}
                           </div>
                           
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium">
-                              Total: R$ {purchase.totalValue.toFixed(2)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {purchase.ticketNumbers.length} número(s)
-                            </span>
+                          <div className="flex justify-between items-center pt-3 border-t">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Valor Total</p>
+                              <p className="font-semibold text-foreground">
+                                {formatCurrency((purchase.raffle?.ticketPrice || 0) * (purchase.ticketNumbers?.length || 0))}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-muted-foreground">ID da Compra</p>
+                              <p className="font-mono text-sm text-foreground">#{purchase.id}</p>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -307,71 +322,26 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Conteúdo da Aba de Gerenciamento de Rifas */}
+      {/* Conteúdo da Aba Rifas (Apenas para Admins) */}
       {activeTab === 'raffles' && isAdmin && (
         <RafflesList />
       )}
 
-      {/* Conteúdo da Aba de Configurações */}
+      {/* Conteúdo da Aba Configurações (Apenas para Admins) */}
       {activeTab === 'settings' && isAdmin && (
         <Card>
           <CardHeader>
-            <CardTitle>Configurações do Sistema</CardTitle>
+            <CardTitle>Configurações</CardTitle>
             <CardDescription>
-              Gerencie as configurações da plataforma
+              Gerencie as configurações do sistema
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12">
-              <Settings className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Configurações em desenvolvimento</p>
-            </div>
+            <p className="text-muted-foreground">
+              Configurações em desenvolvimento...
+            </p>
           </CardContent>
         </Card>
-      )}
-
-      {/* Estatísticas Rápidas (Visão Geral) */}
-      {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">
-                  {purchases.length}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Rifas Participadas
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">
-                  {purchases.reduce((acc, p) => acc + p.ticketNumbers.length, 0)}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Números Comprados
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">
-                  R$ {purchases.reduce((acc, p) => acc + p.totalValue, 0).toFixed(2)}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Total Investido
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       )}
     </div>
   );

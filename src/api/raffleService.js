@@ -36,6 +36,15 @@ const raffleService = {
       throw error.response ? error.response.data : error.message;
     }
   },
+
+  getUserPurchases: async () => {
+    try {
+      const response = await apiClient.get('/purchases/user/me');
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error.message;
+    }
+  },
 };
 
 export default raffleService;
