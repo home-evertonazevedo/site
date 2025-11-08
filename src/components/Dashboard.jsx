@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import raffleService from '../api/raffleService';
 import { User, Mail, Phone, CreditCard, Calendar, Package, LogOut, Edit, BarChart3, Settings, AlertCircle, Loader } from 'lucide-react';
 import { RafflesList } from './admin/RafflesList';
+import { EfipaySettings } from './admin/EfipaySettings';
 
 export function Dashboard() {
   const { user, logout, getFirstName } = useAuth();
@@ -329,19 +330,7 @@ export function Dashboard() {
 
       {/* Conteúdo da Aba Configurações (Apenas para Admins) */}
       {activeTab === 'settings' && isAdmin && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Configurações</CardTitle>
-            <CardDescription>
-              Gerencie as configurações do sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Configurações em desenvolvimento...
-            </p>
-          </CardContent>
-        </Card>
+        <EfipaySettings />
       )}
     </div>
   );
