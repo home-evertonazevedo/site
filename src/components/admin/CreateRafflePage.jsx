@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Textarea } from "@/components/ui/textarea.jsx";
-import { ArrowLeft, Plus, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, Trash2, Edit2 } from 'lucide-react';
 import raffleService from '../../api/raffleService';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -20,15 +20,20 @@ export function CreateRafflePage({ onBack, onSuccess }) {
     totalTickets: ''
   });
 
+  const [prizeQuotas, setPrizeQuotas] = useState([]);
+  const [prizeQuotaForm, setPrizeQuotaForm] = useState({
+    quotaNumber: '',
+    description: '',
+    activationPercentage: ''
+  });
+  const [editingQuotaId, setEditingQuotaId] = useState(null);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
-    // Validações específicas por campo
     if (name === 'ticketPrice') {
-      // Permitir apenas números e ponto
       if (!/^\d*\.?\d*$/.test(value)) return;
     } else if (name === 'totalTickets') {
-      // Permitir apenas números inteiros
       if (!/^\d*$/.test(value)) return;
     }
 
@@ -36,6 +41,89 @@ export function CreateRafflePage({ onBack, onSuccess }) {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handlePrizeQuotaChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'quotaNumber' || name === 'activationPercentage') {
+      if (!/^\d*$/.test(value)) return;
+    }
+
+    setPrizeQuotaForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const addPrizeQuota = () => {
+    setError('');
+
+    if (!prizeQuotaForm.quotaNumber) {
+      setError('Número da cota é obrigatório');
+      return;
+    }
+
+    if (!prizeQuotaForm.description) {
+      setError('Descrição do prêmio é obrigatória');
+      return;
+    }
+
+    if (!prizeQuotaForm.activationPercentage) {
+      setError('Percentual de ativação é obrigatório');
+      return;
+    }
+
+    const percentage = parseInt(prizeQuotaForm.activationPercentage);
+    if (percentage < 0 || percentage > 100) {
+      setError('Percentual deve estar entre 0 e 100');
+      return;
+    }
+
+    const quotaNumber = parseInt(prizeQuotaForm.quotaNumber);
+    
+    if (editingQuotaId !== null) {
+      setPrizeQuotas(prev => prev.map(q => 
+        q.id === editingQuotaId 
+          ? { ...q, quotaNumber, description: prizeQuotaForm.description, activationPercentage: percentage }
+          : q
+      ));
+      setEditingQuotaId(null);
+    } else {
+      setPrizeQuotas(prev => [...prev, {
+        id: Date.now(),
+        quotaNumber,
+        description: prizeQuotaForm.description,
+        activationPercentage: percentage
+      }]);
+    }
+
+    setPrizeQuotaForm({
+      quotaNumber: '',
+      description: '',
+      activationPercentage: ''
+    });
+  };
+
+  const editPrizeQuota = (quota) => {
+    setPrizeQuotaForm({
+      quotaNumber: quota.quotaNumber.toString(),
+      description: quota.description,
+      activationPercentage: quota.activationPercentage.toString()
+    });
+    setEditingQuotaId(quota.id);
+  };
+
+  const removePrizeQuota = (id) => {
+    setPrizeQuotas(prev => prev.filter(q => q.id !== id));
+    if (editingQuotaId === id) {
+      setEditingQuotaId(null);
+      setPrizeQuotaForm({
+        quotaNumber: '',
+        description: '',
+        activationPercentage: ''
+      });
+    }
   };
 
   const validateForm = () => {
@@ -100,7 +188,19 @@ export function CreateRafflePage({ onBack, onSuccess }) {
       };
 
       const response = await raffleService.createRaffle(raffleData);
-      
+      const raffleId = response.id;
+
+      // Adicionar cotas premiadas se houver
+      if (prizeQuotas.length > 0) {
+        for (const quota of prizeQuotas) {
+          await raffleService.addPrizeQuota(raffleId, {
+            quotaNumber: quota.quotaNumber,
+            description: quota.description,
+            activationPercentage: quota.activationPercentage
+          });
+        }
+      }
+
       setSuccess('Rifa criada com sucesso!');
       setFormData({
         title: '',
@@ -108,8 +208,8 @@ export function CreateRafflePage({ onBack, onSuccess }) {
         ticketPrice: '',
         totalTickets: ''
       });
+      setPrizeQuotas([]);
 
-      // Redirecionar após 2 segundos
       setTimeout(() => {
         if (onSuccess) {
           onSuccess();
@@ -214,7 +314,6 @@ export function CreateRafflePage({ onBack, onSuccess }) {
 
             {/* Campos de Preço e Quantidade */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Campo Preço da Cota */}
               <div className="space-y-2">
                 <Label htmlFor="ticketPrice">
                   Preço da Cota (R$) <span className="text-red-500">*</span>
@@ -234,7 +333,6 @@ export function CreateRafflePage({ onBack, onSuccess }) {
                 </p>
               </div>
 
-              {/* Campo Total de Cotas */}
               <div className="space-y-2">
                 <Label htmlFor="totalTickets">
                   Total de Cotas <span className="text-red-500">*</span>
@@ -272,6 +370,117 @@ export function CreateRafflePage({ onBack, onSuccess }) {
                 </div>
               </div>
             )}
+
+            {/* Seção de Cotas Premiadas */}
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Cotas Premiadas (Opcional)</h3>
+              
+              <div className="space-y-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="quotaNumber">
+                      Número da Cota
+                    </Label>
+                    <Input
+                      id="quotaNumber"
+                      name="quotaNumber"
+                      type="text"
+                      placeholder="Ex: 100000"
+                      value={prizeQuotaForm.quotaNumber}
+                      onChange={handlePrizeQuotaChange}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="activationPercentage">
+                      Percentual de Ativação (%)
+                    </Label>
+                    <Input
+                      id="activationPercentage"
+                      name="activationPercentage"
+                      type="text"
+                      placeholder="Ex: 50"
+                      value={prizeQuotaForm.activationPercentage}
+                      onChange={handlePrizeQuotaChange}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="prizeDescription">
+                      Descrição do Prêmio
+                    </Label>
+                    <Input
+                      id="prizeDescription"
+                      name="description"
+                      type="text"
+                      placeholder="Ex: Prêmio de R$ 10.000"
+                      value={prizeQuotaForm.description}
+                      onChange={handlePrizeQuotaChange}
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={addPrizeQuota}
+                  disabled={loading}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {editingQuotaId !== null ? 'Atualizar Cota' : 'Adicionar Cota Premiada'}
+                </Button>
+              </div>
+
+              {/* Lista de Cotas Premiadas */}
+              {prizeQuotas.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">
+                    Cotas Premiadas ({prizeQuotas.length})
+                  </p>
+                  {prizeQuotas.map((quota) => (
+                    <div
+                      key={quota.id}
+                      className="p-3 bg-muted rounded-lg flex justify-between items-start"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">
+                          Cota #{quota.quotaNumber}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {quota.description}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Ativação: {quota.activationPercentage}%
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => editPrizeQuota(quota)}
+                          disabled={loading}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removePrizeQuota(quota.id)}
+                          disabled={loading}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Botões de Ação */}
             <div className="flex gap-4 pt-4">
@@ -315,6 +524,7 @@ export function CreateRafflePage({ onBack, onSuccess }) {
           <p>• A rifa será criada com status "Ativa" e disponível para compra imediatamente.</p>
           <p>• Você poderá editar ou cancelar a rifa a qualquer momento na lista de rifas.</p>
           <p>• O preço da cota não pode ser alterado após a criação.</p>
+          <p>• As cotas premiadas são opcionais e podem ser adicionadas após a criação da rifa.</p>
           <p>• Certifique-se de que as informações estão corretas antes de criar a rifa.</p>
         </CardContent>
       </Card>

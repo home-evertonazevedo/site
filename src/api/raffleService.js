@@ -45,6 +45,51 @@ const raffleService = {
       throw error.response ? error.response.data : error.message;
     }
   },
+
+  addPrizeQuota: async (raffleId, prizeQuotaData) => {
+    try {
+      const response = await apiClient.post(`/raffles/${raffleId}/prize-quotas`, prizeQuotaData);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error.message;
+    }
+  },
+
+  getPrizeQuotas: async (raffleId) => {
+    try {
+      const response = await apiClient.get(`/raffles/${raffleId}/prize-quotas`);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error.message;
+    }
+  },
+
+  updatePrizeQuota: async (raffleId, prizeQuotaData) => {
+    try {
+      const response = await apiClient.put(`/raffles/${raffleId}/prize-quotas`, prizeQuotaData);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error.message;
+    }
+  },
+
+  deletePrizeQuota: async (raffleId, prizeQuotaId) => {
+    try {
+      const response = await apiClient.delete(`/raffles/${raffleId}/prize-quotas/${prizeQuotaId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error.message;
+    }
+  },
+
+  getRaffleWithPrizeQuotas: async (raffleId) => {
+    try {
+      const response = await apiClient.get(`/raffles/${raffleId}/with-prize-quotas`);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error.message;
+    }
+  },
 };
 
 export default raffleService;
