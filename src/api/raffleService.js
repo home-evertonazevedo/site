@@ -48,7 +48,10 @@ const raffleService = {
 
   addPrizeQuota: async (raffleId, prizeQuotaData) => {
     try {
-      const response = await apiClient.post(`/raffles/${raffleId}/prize-quotas`, prizeQuotaData);
+      const response = await apiClient.post('/raffles/prize-quotas', {
+        raffleId,
+        ...prizeQuotaData
+      });
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error.message;
